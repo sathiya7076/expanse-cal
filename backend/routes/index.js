@@ -1,0 +1,21 @@
+import { Router } from 'express';
+import authRoutes from './authRoutes.js';
+import budgetRoutes from './budgetRoutes.js';
+import dashboardRoutes from './dashboardRoutes.js';
+import goalRoutes from './goalRoutes.js';
+import receiptRoutes from './receiptRoutes.js';
+import reportRoutes from './reportRoutes.js';
+import salaryRoutes from './salaryRoutes.js';
+import transactionRoutes from './transactionRoutes.js';
+
+const router = Router();
+router.get('/health', (_req, res) => res.json({ status: 'ok' }));
+router.use('/auth', authRoutes);
+router.use('/salary', salaryRoutes);
+router.use('/transactions', transactionRoutes);
+router.use('/receipts', receiptRoutes);
+router.use('/dashboard', dashboardRoutes);
+router.use('/budgets', budgetRoutes);
+router.use('/reports', reportRoutes);
+router.use('/savings-goals', goalRoutes);
+export default router;
