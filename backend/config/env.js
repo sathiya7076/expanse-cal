@@ -11,6 +11,9 @@ if (process.env.JWT_SECRET.length < 16) {
   process.exit(1);
 }
 
+// On Vercel the project folder is read-only; only /tmp can be written to (files there are temporary).
+const uploadDir = process.env.VERCEL ? '/tmp/uploads' : path.resolve(process.cwd(), process.env.UPLOAD_DIR || 'uploads');
+
 export const env = {
   nodeEnv: process.env.NODE_ENV || 'development',
   port: Number(process.env.PORT) || 5000,
@@ -18,5 +21,5 @@ export const env = {
   jwtSecret: process.env.JWT_SECRET,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
-  uploadDir: path.resolve(process.cwd(), process.env.UPLOAD_DIR || 'uploads'),
+  uploadDir,
 };

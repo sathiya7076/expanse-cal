@@ -5,7 +5,12 @@ import AppError from '../utils/AppError.js';
 import { env } from '../config/env.js';
 import { MAX_UPLOAD_BYTES } from '../config/constants.js';
 
-fs.mkdirSync(env.uploadDir, { recursive: true });
+// Do not crash the whole server if the folder cannot be created (for example on a read-only host).
+try {
+  fs.mkdirSync(env.uploadDir, { recursive: true });
+} catch (e) {
+  console.error('Could not create upload folder:', e.message);
+}
 
 const EXT = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
 
