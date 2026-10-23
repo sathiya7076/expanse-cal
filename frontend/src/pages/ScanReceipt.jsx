@@ -10,7 +10,7 @@ import ConfidenceBadge from '../components/receipts/ConfidenceBadge';
 import Dropzone from '../components/receipts/Dropzone';
 import { useToast } from '../hooks/useToast';
 import { errorMessage } from '../services/api';
-import { confirmReceipt, scanReceipt } from '../services/receipts';
+import { autoAddReceipt, confirmReceipt, scanReceipt } from '../services/receipts';
 import { EXPENSE_CATEGORIES, PAYMENT_METHODS } from '../utils/constants';
 import { toInputDate } from '../utils/format';
 
@@ -51,6 +51,26 @@ export default function ScanReceipt() {
 
     setErrors({});
     dispatch({ type: 'start', preview: URL.createObjectURL(file) });
+
+    // NEW: try to add the expense / income entries automatically first.
+    try {
+      const out = await autoAddReceipt(file, (value) => dispatch({ type: 'progress', value }));
+      const saved = out?.saved || [];
+      if (saved.length) {
+        const skipped = out.skipped?.length || 0;
+        toast.success(
+          `${saved.length} ${saved.length === 1 ? 'entry' : 'entries'} added automatically.${skipped ? ` ${skipped} could not be matched.` : ''}`,
+        );
+        navigate(saved.every((t) => t.type === 'income') ? '/income' : '/expenses');
+        return;
+      }
+    } catch (e) {
+      // Already saved: tell the user instead of scanning again.
+      if (e?.response?.status === 409) return dispatch({ type: 'error', message: errorMessage(e) });
+      console.error('Auto add failed, falling back to review:', e);
+      // Anything else: continue with the normal scan and review flow below.
+    }
+
     try {
       const res = await scanReceipt(file, (value) => dispatch({ type: 'progress', value }));
       const f = res.fields || {};
@@ -105,7 +125,7 @@ export default function ScanReceipt() {
 
   return (
     <>
-      <PageHeader title="Scan receipt" description="Upload a bill and we will read it. Nothing is saved until you confirm." />
+      <PageHeader title="Scan receipt" description="Upload a bill or handwritten note and we will add it for you. If we cannot read everything, you can review it first." />
 
       {(status === 'idle' || status === 'error') && <Dropzone onFile={onFile} error={status === 'error' ? error : null} />}
 
